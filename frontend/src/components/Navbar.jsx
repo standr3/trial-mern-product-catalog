@@ -1,28 +1,27 @@
-import React from 'react'
-import { Link } from 'react-router'
-import { PlusIcon } from "lucide-react"
+import { Box, Button, Container, Flex, Heading, HStack } from "@chakra-ui/react";
+import { Link as RouterLink } from "react-router-dom";
+
 const Navbar = () => {
-  return (
-    <header className='bg-base-300 border-b border-base-content/10'>
-      <div className='mx-auto max-w-6xl p-4 '>
-        <div className='flex items-center justify-between'>
-          <h1 className='text-3xl font-bold text-primary font-mono tracking-tight'>
-            Logo
-          </h1>
+	return (
+		<Box borderBottom='1px solid' borderColor='whiteAlpha.200' py={4}>
+			<Container maxW='container.xl'>
+				<Flex justify='space-between' align='center'>
+					<Heading size='md' as={RouterLink} to='/games'>
+						GameVault
+					</Heading>
 
-          <div className='flex items-center gap-4'>
-            <Link to={"/create"} className='btn btn-primary '>
-              <PlusIcon className='size-5' />
-              <span>New Note</span>
-            </Link>
-          </div>
+					<HStack spacing={3}>
+						<Button as={RouterLink} to='/games' variant='ghost'>
+							Catalog
+						</Button>
+						<Button as={RouterLink} to='/games/new' colorScheme='purple'>
+							Add Game
+						</Button>
+					</HStack>
+				</Flex>
+			</Container>
+		</Box>
+	);
+};
 
-        </div>
-
-      </div>
-
-    </header>
-  )
-}
-
-export default Navbar
+export default Navbar;

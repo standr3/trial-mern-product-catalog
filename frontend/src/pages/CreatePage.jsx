@@ -1,97 +1,85 @@
-import api from "../lib/axios";
-import { ArrowLeftIcon } from "lucide-react";
 import { useState } from "react";
-import toast from "react-hot-toast";
-import { Link, useNavigate } from "react-router";
+import { Container, Heading, useToast } from "@chakra-ui/react";
+import { useNavigate } from "react-router-dom";
+import GameForm from "../components/GameForm";
+import { useGameStore } from "../store/game";
+import { validateGame } from "../utils/validateGame";
 
 const CreatePage = () => {
+	const navigate = useNavigate();
+	const toast = useToast();
+	const { createGame, loading } = useGameStore();
 
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+	const [formData, setFormData] = useState({
+		title: "",
+		price: "",
+		platform: "",
+		genre: "",
+		image: "",
+		releaseYear: "",
+		stock: "",
+		description: "",
+	});
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!title.trim() || !content.trim()) {
-      toast.error("All fields are required");
-      return;
-    }
+	const handleSubmit = async (e) => {
+		e.preventDefault();
 
-    setLoading(true);
+		const validationError = validateGame(formData);
+		if (validationError) {
+			toast({
+				title: "Validation error",
+				description: validationError,
+				status: "error",
+				duration: 3000,
+				isClosable: true,
+			});
+			return;
+		}
 
-    try {
-      await api.post("/notes", {
-        title,
-        content
-      });
-      toast.success("Note created successfully!");
-      navigate("/");
-    } catch (error) {
-      console.log("Error creating note", error);
-      if (error.response.status === 429) {
-        toast.error("Slow down! You're creating notes too fast", {
-          duration: 4000,
-          icon: "💀",
-        });
-      } else {
-        toast.error("Failed to create note");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-  return (
-    <div className="min-h-screen bg-base-200">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          <Link to={"/"} className="btn btn-ghost mb-6">
-            <ArrowLeftIcon className="size-5" />
-            Back to Notes
-          </Link>
+		const payload = {
+			...formData,
+			price: Number(formData.price),
+			releaseYear: formData.releaseYear ? Number(formData.releaseYear) : undefined,
+			stock: formData.stock ? Number(formData.stock) : 0,
+		};
 
-          <div className="card bg-base-100">
-            <div className="card-body">
-              <h2 className="card-title text-2xl mb-4">Create New Note</h2>
-              <form onSubmit={handleSubmit}>
-                <div className="form-control mb-4">
-                  <label className="label">
-                    <span className="label-text">Title</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Note Title"
-                    className="input input-bordered"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                  />
-                </div>
+		const { success, message } = await createGame(payload);
 
-                <div className="form-control mb-4">
-                  <label className="label">
-                    <span className="label-text">Content</span>
-                  </label>
-                  <textarea
-                    placeholder="Write your note here..."
-                    className="textarea textarea-bordered h-32"
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                  />
-                </div>
+		if (!success) {
+			toast({
+				title: "Error",
+				description: message,
+				status: "error",
+				duration: 3000,
+				isClosable: true,
+			});
+			return;
+		}
 
-                <div className="card-actions justify-end">
-                  <button type="submit" className="btn btn-primary" disabled={loading}>
-                    {loading ? "Creating..." : "Create Note"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+		toast({
+			title: "Success",
+			description: message,
+			status: "success",
+			duration: 3000,
+			isClosable: true,
+		});
 
-}
+		navigate("/games");
+	};
 
-export default CreatePage
+	return (
+		<Container maxW='container.md' py={8}>
+			<Heading mb={6}>Add New Game</Heading>
+
+			<GameForm
+				formData={formData}
+				setFormData={setFormData}
+				onSubmit={handleSubmit}
+				isLoading={loading}
+				submitLabel='Create Game'
+			/>
+		</Container>
+	);
+};
+
+export default CreatePage;

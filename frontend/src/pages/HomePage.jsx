@@ -1,63 +1,126 @@
-import React, { useState, useEffect } from 'react'
-import api from "../lib/axios";
-import Navbar from '../components/Navbar'
-import RateLimitedUI from '../components/RateLimitedUI'
-import { toast } from 'react-hot-toast'
-import NoteCard from '../components/NoteCard';
-import NotesNotFound from '../components/NotesNotFound';
+import { useEffect } from "react";
+import { Container, Heading, Text, VStack } from "@chakra-ui/react";
+import { useGameStore } from "../store/game";
+import GameFilters from "../components/GameFilters";
+import GameGrid from "../components/GameGrid";
+import LoadingSpinner from "../components/LoadingSpinner";
+import ErrorState from "../components/ErrorState";
+import EmptyState from "../components/EmptyState";
+import PaginationControls from "../components/PaginationControls";
 
 const HomePage = () => {
+	const {
+		games,
+		loading,
+		error,
+		fetchGames,
+		filters,
+		setFilters,
+		resetFilters,
+		pagination,
+	} = useGameStore();
 
-  const [isRateLimited, setIsRateLimited] = useState(false);
-  const [notes, setNotes] = useState([]);
-  const [loading, setLoading] = useState(true);
+	useEffect(() => {
+		fetchGames();
+	}, []);
 
-  useEffect(() => {
-    const fetchNotes = async () => {
-      try {
-        const res = await api.get("/notes");
+	const handleSearchChange = (value) => {
+		setFilters({ search: value, page: 1 });
+	};
 
-        setNotes(res.data);
-      } catch (error) {
-        console.log("Error fetching notes");
-        if (error.response.status === 429) {
-          setIsRateLimited(true);
-        } else {
-          toast.error("Failed to load notes");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
+	const handlePlatformChange = (value) => {
+		setFilters({ platform: value, page: 1 });
+	};
 
-    fetchNotes();
-  }, []);
+	const handleGenreChange = (value) => {
+		setFilters({ genre: value, page: 1 });
+	};
 
+	const handleSortChange = (value) => {
+		setFilters({ sort: value, page: 1 });
+	};
 
-  return (
-    <div className=' min-h-screen'>
-      <Navbar />
+	const handleResetFilters = async () => {
+		resetFilters();
+		const store = useGameStore.getState();
+		await store.fetchGames({
+			search: "",
+			platform: "",
+			genre: "",
+			sort: "",
+			page: 1,
+			limit: 9,
+		});
+	};
 
-      {
-        isRateLimited && <RateLimitedUI />
-      }
+	const handlePageChange = async (newPage) => {
+		await fetchGames({ ...filters, page: newPage });
+	};
 
-      <div className="max-w-7xl mx-auto p-4 mt-6">
-        {loading && <div className="text-center text-primary py-10">Loading notes...</div>}
+	const handleApplyFilters = async () => {
+		await fetchGames(filters);
+	};
 
-        {notes.length === 0 && !isRateLimited && <NotesNotFound />}
+	useEffect(() => {
+		const timeout = setTimeout(() => {
+			fetchGames(filters);
+		}, 300);
 
+		return () => clearTimeout(timeout);
+	}, [filters.search, filters.platform, filters.genre, filters.sort]);
 
-        {notes.length > 0 && !isRateLimited && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {notes.map((note) => (
-              <NoteCard key={note._id} note={note} setNotes={setNotes} />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+	return (
+		<Container maxW='container.xl' py={8}>
+			<VStack align='stretch' spacing={6}>
+				<Heading>Gaming Store</Heading>
 
-export default HomePage
+				<Text color='gray.400'>
+					Browse, filter and manage your game catalog.
+				</Text>
+
+				<GameFilters
+					searchTerm={filters.search}
+					setSearchTerm={handleSearchChange}
+					selectedPlatform={filters.platform}
+					setSelectedPlatform={handlePlatformChange}
+					selectedGenre={filters.genre}
+					setSelectedGenre={handleGenreChange}
+					sortBy={filters.sort}
+					setSortBy={handleSortChange}
+					onReset={handleResetFilters}
+					onApply={handleApplyFilters}
+				/>
+
+				{loading && <LoadingSpinner />}
+
+				{!loading && error && <ErrorState message={error} />}
+
+				{!loading && !error && games.length === 0 && (
+					<EmptyState
+						title='No games found'
+						description='Try changing your filters or add a new game.'
+						showButton
+					/>
+				)}
+
+				{!loading && !error && games.length > 0 && (
+					<>
+						<Text color='gray.400'>
+							Showing {games.length} games out of {pagination.totalGames}
+						</Text>
+
+						<GameGrid games={games} />
+
+						<PaginationControls
+							currentPage={pagination.currentPage}
+							totalPages={pagination.totalPages}
+							onPageChange={handlePageChange}
+						/>
+					</>
+				)}
+			</VStack>
+		</Container>
+	);
+};
+
+export default HomePage;
