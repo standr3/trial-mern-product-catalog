@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "NODE_ENV=development nodemon backend/server.js",
-		"build": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
-		"start": "NODE_ENV=production node backend/server.js",
+    "dev": "set NODE_ENV=development&& nodemon backend/server.js",
+    "build": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
+    "start": "set NODE_ENV=production&& node backend/server.js",
     "seed": "node backend/scripts/seedGames.js"
   },
   "repository": {
@@ -14,17 +14,17 @@
     "url": "git+https://github.com/standr3/trial-mern-product-catalog.git"
   },
   "type": "module",
-	"keywords": [],
-	"author": "",
-	"license": "ISC",
-	"dependencies": {
-		"dotenv": "^16.4.5",
-		"express": "^4.19.2",
-		"mongoose": "^8.5.1"
-	},
-	"devDependencies": {
-		"nodemon": "^3.1.4"
-	},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.5.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
   "bugs": {
     "url": "https://github.com/standr3/trial-mern-product-catalog/issues"
   },
